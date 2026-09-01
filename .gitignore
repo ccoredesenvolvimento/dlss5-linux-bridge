@@ -1,0 +1,40 @@
+# Build products
+build/
+*.a
+*.dll
+*.exe
+*.lib
+*.o
+*.obj
+*.pdb
+
+# Runtime and profiling artifacts
+*.bin
+*.cubin
+*.csv
+*.fatbin
+*.json
+*.log
+*.ptx
+*.ppm
+ngx-data/
+profiles/
+
+# Captures and archives
+*.7z
+*.gif
+*.jpg
+*.jpeg
+*.mkv
+*.mp4
+*.png
+*.tar
+*.tar.*
+*.webm
+*.xwd
+*.zip
+
+# Third-party SDKs and game files must remain local
+nvidia-dlss-sdk/
+third_party/
+vendor/
