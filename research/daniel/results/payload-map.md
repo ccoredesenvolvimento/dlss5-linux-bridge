@@ -1,0 +1,345 @@
+# Embedded payload map
+
+> Metadata-only static analysis; no embedded executable or code object is included.
+
+- Installer SHA-256: `b4b31e19e1d9028b3d63b7ac5074d7f71ede736d6185c11d25863f6415c6ece9`
+- Valid PE candidates: `2`
+- Valid ELF candidates: `4`
+
+## PE candidates
+
+### PE at `0x0`
+
+- Kind: `exe`
+- Machine: `0x8664`
+- Sections: `6`
+- Intrinsic size: `239616`
+- SHA-256 of intrinsic image: `83768cd0a5a44448e38e04d5331b35cc66bfab351f91ad3e9037264ebcb1bf82`
+- Imported DLLs: `bcrypt.dll, COMDLG32.dll, ole32.dll, SHELL32.dll, ADVAPI32.dll, dxgi.dll, KERNEL32.dll`
+- Export count: `0`
+- Resource count: `0`
+
+### PE at `0x3a800`
+
+- Kind: `dll`
+- Machine: `0x8664`
+- Sections: `12`
+- Intrinsic size: `4548096`
+- SHA-256 of intrinsic image: `69d178849d974bccfeedfab3cd0540fb1cf69e308b522702609e1cfb1d84b635`
+- Imported DLLs: `d3d12.dll, dxgi.dll, D3DCOMPILER_47.dll, USER32.dll, GDI32.dll, COMDLG32.dll, amdhip64_7.dll, bcrypt.dll, KERNEL32.dll`
+- Export count: `17`
+- Resource count: `0`
+
+## AMDGPU ELF candidates
+
+### ELF 0 at `0xb0e00`
+
+- Machine: `EM_AMDGPU`
+- Intrinsic size: `1179328`
+- SHA-256: `e363aa788e7626b93c6c449583e3c3bf340a6fa69d434cf98285fef12ec6b21a`
+- Sections: `16`
+- Notes: `1`
+- Kernel-related symbols: `68`
+
+  - `_Z6k_qkv29QkvParams.kd`
+  - `_Z12k_attention212AttnParams1d.kd`
+  - `_Z10k_flag_setPjj.kd`
+  - `_Z11k_attention12AttnParams1d.kd`
+  - `_Z11k_qkv_attn210AttnParams.kd`
+  - `_Z13k_conv_splitk12ConvParams1d.kd`
+  - `_Z10k_swin_varILi32ELb0EEv9VarParams.kd`
+  - `_Z11k_contract212ConvParams1d.kd`
+  - `_Z10k_swin_varILi256ELb0EEv9VarParams.kd`
+  - `_Z8k_import12ImportParams.kd`
+  - `_Z10k_swin_varILi128ELb0EEv9VarParams.kd`
+  - `_Z8k_expand12ExpandParams.kd`
+  - `_Z14k_dec_upsample11DecUpParams.kd`
+  - `_Z6k_ffwd10FfwdParams.kd`
+  - `_Z16k_swin_1h_32_fp810SwinParams.kd`
+  - `_Z10k_swin_varILi64ELb0EEv9VarParams.kd`
+  - `_Z10k_qkv_attn10AttnParams.kd`
+  - `_Z5k_qkv9QkvParams.kd`
+  - `_Z16k_conv_res_views12ConvPlParams.kd`
+  - `_Z6k_mean10MeanParams.kd`
+  - `_Z11k_flag_waitPjjj.kd`
+  - `_Z8k_export12ExportParams.kd`
+  - `_Z21k_pre_block_1h_32_fp89PreParams.kd`
+  - `_Z22k_post_block_1h_32_fp810PostParams.kd`
+  - `_Z8k_repack12RepackParams.kd`
+  - `_Z9k_expand212ExpandParams.kd`
+  - `_Z14k_ffwd_inpview12FfwdPlParams.kd`
+  - `_Z12k_final_head10HeadParams.kd`
+  - `_Z10k_swin_varILi32ELb1EEv9VarParams.kd`
+  - `g_e4m3_lut`
+  - `_Z10k_conv_res10ConvParams.kd`
+  - `_Z11k_conv_res211Conv2Params.kd`
+  - `_Z11k_reproject12ReprojParams.kd`
+  - `_Z7k_ffwd211Ffwd2Params.kd`
+  - `_Z16k_swin_1h_32_fp810SwinParams.kd`
+  - `_Z21k_pre_block_1h_32_fp89PreParams.kd`
+  - `_Z22k_post_block_1h_32_fp810PostParams.kd`
+  - `g_e4m3_lut`
+  - `_Z6k_ffwd10FfwdParams.kd`
+  - `_Z10k_conv_res10ConvParams.kd`
+  - `_Z10k_qkv_attn10AttnParams.kd`
+  - `_Z7k_ffwd211Ffwd2Params.kd`
+  - `_Z11k_conv_res211Conv2Params.kd`
+  - `_Z11k_qkv_attn210AttnParams.kd`
+  - `_Z8k_expand12ExpandParams.kd`
+  - `_Z13k_conv_splitk12ConvParams1d.kd`
+  - `_Z5k_qkv9QkvParams.kd`
+  - `_Z11k_attention12AttnParams1d.kd`
+  - `_Z9k_expand212ExpandParams.kd`
+  - `_Z11k_contract212ConvParams1d.kd`
+  - `_Z6k_qkv29QkvParams.kd`
+  - `_Z12k_attention212AttnParams1d.kd`
+  - `_Z14k_ffwd_inpview12FfwdPlParams.kd`
+  - `_Z16k_conv_res_views12ConvPlParams.kd`
+  - `_Z12k_final_head10HeadParams.kd`
+  - `_Z8k_repack12RepackParams.kd`
+  - `_Z14k_dec_upsample11DecUpParams.kd`
+  - `_Z6k_mean10MeanParams.kd`
+  - `_Z8k_import12ImportParams.kd`
+  - `_Z8k_export12ExportParams.kd`
+  - `_Z11k_reproject12ReprojParams.kd`
+  - `_Z11k_flag_waitPjjj.kd`
+  - `_Z10k_flag_setPjj.kd`
+  - `_Z10k_swin_varILi32ELb1EEv9VarParams.kd`
+  - `_Z10k_swin_varILi32ELb0EEv9VarParams.kd`
+  - `_Z10k_swin_varILi64ELb0EEv9VarParams.kd`
+  - `_Z10k_swin_varILi128ELb0EEv9VarParams.kd`
+  - `_Z10k_swin_varILi256ELb0EEv9VarParams.kd`
+
+### ELF 1 at `0x1d0e00`
+
+- Machine: `EM_AMDGPU`
+- Intrinsic size: `1179328`
+- SHA-256: `109498324c893b11b8feea1025068f69c5aa56d20b5d06d83d167005ab202110`
+- Sections: `16`
+- Notes: `1`
+- Kernel-related symbols: `68`
+
+  - `_Z6k_qkv29QkvParams.kd`
+  - `_Z12k_attention212AttnParams1d.kd`
+  - `_Z10k_flag_setPjj.kd`
+  - `_Z11k_attention12AttnParams1d.kd`
+  - `_Z11k_qkv_attn210AttnParams.kd`
+  - `_Z13k_conv_splitk12ConvParams1d.kd`
+  - `_Z10k_swin_varILi32ELb0EEv9VarParams.kd`
+  - `_Z11k_contract212ConvParams1d.kd`
+  - `_Z10k_swin_varILi256ELb0EEv9VarParams.kd`
+  - `_Z8k_import12ImportParams.kd`
+  - `_Z10k_swin_varILi128ELb0EEv9VarParams.kd`
+  - `_Z8k_expand12ExpandParams.kd`
+  - `_Z14k_dec_upsample11DecUpParams.kd`
+  - `_Z6k_ffwd10FfwdParams.kd`
+  - `_Z16k_swin_1h_32_fp810SwinParams.kd`
+  - `_Z10k_swin_varILi64ELb0EEv9VarParams.kd`
+  - `_Z10k_qkv_attn10AttnParams.kd`
+  - `_Z5k_qkv9QkvParams.kd`
+  - `_Z16k_conv_res_views12ConvPlParams.kd`
+  - `_Z6k_mean10MeanParams.kd`
+  - `_Z11k_flag_waitPjjj.kd`
+  - `_Z8k_export12ExportParams.kd`
+  - `_Z21k_pre_block_1h_32_fp89PreParams.kd`
+  - `_Z22k_post_block_1h_32_fp810PostParams.kd`
+  - `_Z8k_repack12RepackParams.kd`
+  - `_Z9k_expand212ExpandParams.kd`
+  - `_Z14k_ffwd_inpview12FfwdPlParams.kd`
+  - `_Z12k_final_head10HeadParams.kd`
+  - `_Z10k_swin_varILi32ELb1EEv9VarParams.kd`
+  - `g_e4m3_lut`
+  - `_Z10k_conv_res10ConvParams.kd`
+  - `_Z11k_conv_res211Conv2Params.kd`
+  - `_Z11k_reproject12ReprojParams.kd`
+  - `_Z7k_ffwd211Ffwd2Params.kd`
+  - `_Z16k_swin_1h_32_fp810SwinParams.kd`
+  - `_Z21k_pre_block_1h_32_fp89PreParams.kd`
+  - `_Z22k_post_block_1h_32_fp810PostParams.kd`
+  - `g_e4m3_lut`
+  - `_Z6k_ffwd10FfwdParams.kd`
+  - `_Z10k_conv_res10ConvParams.kd`
+  - `_Z10k_qkv_attn10AttnParams.kd`
+  - `_Z7k_ffwd211Ffwd2Params.kd`
+  - `_Z11k_conv_res211Conv2Params.kd`
+  - `_Z11k_qkv_attn210AttnParams.kd`
+  - `_Z8k_expand12ExpandParams.kd`
+  - `_Z13k_conv_splitk12ConvParams1d.kd`
+  - `_Z5k_qkv9QkvParams.kd`
+  - `_Z11k_attention12AttnParams1d.kd`
+  - `_Z9k_expand212ExpandParams.kd`
+  - `_Z11k_contract212ConvParams1d.kd`
+  - `_Z6k_qkv29QkvParams.kd`
+  - `_Z12k_attention212AttnParams1d.kd`
+  - `_Z14k_ffwd_inpview12FfwdPlParams.kd`
+  - `_Z16k_conv_res_views12ConvPlParams.kd`
+  - `_Z12k_final_head10HeadParams.kd`
+  - `_Z8k_repack12RepackParams.kd`
+  - `_Z14k_dec_upsample11DecUpParams.kd`
+  - `_Z6k_mean10MeanParams.kd`
+  - `_Z8k_import12ImportParams.kd`
+  - `_Z8k_export12ExportParams.kd`
+  - `_Z11k_reproject12ReprojParams.kd`
+  - `_Z11k_flag_waitPjjj.kd`
+  - `_Z10k_flag_setPjj.kd`
+  - `_Z10k_swin_varILi32ELb1EEv9VarParams.kd`
+  - `_Z10k_swin_varILi32ELb0EEv9VarParams.kd`
+  - `_Z10k_swin_varILi64ELb0EEv9VarParams.kd`
+  - `_Z10k_swin_varILi128ELb0EEv9VarParams.kd`
+  - `_Z10k_swin_varILi256ELb0EEv9VarParams.kd`
+
+### ELF 2 at `0x2f0e00`
+
+- Machine: `EM_AMDGPU`
+- Intrinsic size: `1181048`
+- SHA-256: `3708f939e94fa7295afc5f80463a8774a84af446f68f8981dc15ae9b923c3958`
+- Sections: `16`
+- Notes: `1`
+- Kernel-related symbols: `68`
+
+  - `_Z6k_qkv29QkvParams.kd`
+  - `_Z12k_attention212AttnParams1d.kd`
+  - `_Z10k_flag_setPjj.kd`
+  - `_Z11k_attention12AttnParams1d.kd`
+  - `_Z11k_qkv_attn210AttnParams.kd`
+  - `_Z13k_conv_splitk12ConvParams1d.kd`
+  - `_Z10k_swin_varILi32ELb0EEv9VarParams.kd`
+  - `_Z11k_contract212ConvParams1d.kd`
+  - `_Z10k_swin_varILi256ELb0EEv9VarParams.kd`
+  - `_Z8k_import12ImportParams.kd`
+  - `_Z10k_swin_varILi128ELb0EEv9VarParams.kd`
+  - `_Z8k_expand12ExpandParams.kd`
+  - `_Z14k_dec_upsample11DecUpParams.kd`
+  - `_Z6k_ffwd10FfwdParams.kd`
+  - `_Z16k_swin_1h_32_fp810SwinParams.kd`
+  - `_Z10k_swin_varILi64ELb0EEv9VarParams.kd`
+  - `_Z10k_qkv_attn10AttnParams.kd`
+  - `_Z5k_qkv9QkvParams.kd`
+  - `_Z16k_conv_res_views12ConvPlParams.kd`
+  - `_Z6k_mean10MeanParams.kd`
+  - `_Z11k_flag_waitPjjj.kd`
+  - `_Z8k_export12ExportParams.kd`
+  - `_Z21k_pre_block_1h_32_fp89PreParams.kd`
+  - `_Z22k_post_block_1h_32_fp810PostParams.kd`
+  - `_Z8k_repack12RepackParams.kd`
+  - `_Z9k_expand212ExpandParams.kd`
+  - `_Z14k_ffwd_inpview12FfwdPlParams.kd`
+  - `_Z12k_final_head10HeadParams.kd`
+  - `_Z10k_swin_varILi32ELb1EEv9VarParams.kd`
+  - `g_e4m3_lut`
+  - `_Z10k_conv_res10ConvParams.kd`
+  - `_Z11k_conv_res211Conv2Params.kd`
+  - `_Z11k_reproject12ReprojParams.kd`
+  - `_Z7k_ffwd211Ffwd2Params.kd`
+  - `_Z16k_swin_1h_32_fp810SwinParams.kd`
+  - `_Z21k_pre_block_1h_32_fp89PreParams.kd`
+  - `_Z22k_post_block_1h_32_fp810PostParams.kd`
+  - `g_e4m3_lut`
+  - `_Z6k_ffwd10FfwdParams.kd`
+  - `_Z10k_conv_res10ConvParams.kd`
+  - `_Z10k_qkv_attn10AttnParams.kd`
+  - `_Z7k_ffwd211Ffwd2Params.kd`
+  - `_Z11k_conv_res211Conv2Params.kd`
+  - `_Z11k_qkv_attn210AttnParams.kd`
+  - `_Z8k_expand12ExpandParams.kd`
+  - `_Z13k_conv_splitk12ConvParams1d.kd`
+  - `_Z5k_qkv9QkvParams.kd`
+  - `_Z11k_attention12AttnParams1d.kd`
+  - `_Z9k_expand212ExpandParams.kd`
+  - `_Z11k_contract212ConvParams1d.kd`
+  - `_Z6k_qkv29QkvParams.kd`
+  - `_Z12k_attention212AttnParams1d.kd`
+  - `_Z14k_ffwd_inpview12FfwdPlParams.kd`
+  - `_Z16k_conv_res_views12ConvPlParams.kd`
+  - `_Z12k_final_head10HeadParams.kd`
+  - `_Z8k_repack12RepackParams.kd`
+  - `_Z14k_dec_upsample11DecUpParams.kd`
+  - `_Z6k_mean10MeanParams.kd`
+  - `_Z8k_import12ImportParams.kd`
+  - `_Z8k_export12ExportParams.kd`
+  - `_Z11k_reproject12ReprojParams.kd`
+  - `_Z11k_flag_waitPjjj.kd`
+  - `_Z10k_flag_setPjj.kd`
+  - `_Z10k_swin_varILi32ELb1EEv9VarParams.kd`
+  - `_Z10k_swin_varILi32ELb0EEv9VarParams.kd`
+  - `_Z10k_swin_varILi64ELb0EEv9VarParams.kd`
+  - `_Z10k_swin_varILi128ELb0EEv9VarParams.kd`
+  - `_Z10k_swin_varILi256ELb0EEv9VarParams.kd`
+
+### ELF 3 at `0x411e00`
+
+- Machine: `EM_AMDGPU`
+- Intrinsic size: `505096`
+- SHA-256: `12fdd63876ad0cf9b70c947d369bd8b0ed00aa2345021076d72a008dc8e1f4cd`
+- Sections: `16`
+- Notes: `1`
+- Kernel-related symbols: `68`
+
+  - `_Z6k_qkv29QkvParams.kd`
+  - `_Z12k_attention212AttnParams1d.kd`
+  - `_Z10k_flag_setPjj.kd`
+  - `_Z11k_attention12AttnParams1d.kd`
+  - `_Z11k_qkv_attn210AttnParams.kd`
+  - `_Z13k_conv_splitk12ConvParams1d.kd`
+  - `_Z10k_swin_varILi32ELb0EEv9VarParams.kd`
+  - `_Z11k_contract212ConvParams1d.kd`
+  - `_Z10k_swin_varILi256ELb0EEv9VarParams.kd`
+  - `_Z8k_import12ImportParams.kd`
+  - `_Z10k_swin_varILi128ELb0EEv9VarParams.kd`
+  - `_Z8k_expand12ExpandParams.kd`
+  - `_Z14k_dec_upsample11DecUpParams.kd`
+  - `_Z6k_ffwd10FfwdParams.kd`
+  - `_Z16k_swin_1h_32_fp810SwinParams.kd`
+  - `_Z10k_swin_varILi64ELb0EEv9VarParams.kd`
+  - `_Z10k_qkv_attn10AttnParams.kd`
+  - `_Z5k_qkv9QkvParams.kd`
+  - `_Z16k_conv_res_views12ConvPlParams.kd`
+  - `_Z6k_mean10MeanParams.kd`
+  - `_Z11k_flag_waitPjjj.kd`
+  - `_Z8k_export12ExportParams.kd`
+  - `_Z21k_pre_block_1h_32_fp89PreParams.kd`
+  - `_Z22k_post_block_1h_32_fp810PostParams.kd`
+  - `_Z8k_repack12RepackParams.kd`
+  - `_Z9k_expand212ExpandParams.kd`
+  - `_Z14k_ffwd_inpview12FfwdPlParams.kd`
+  - `_Z12k_final_head10HeadParams.kd`
+  - `_Z10k_swin_varILi32ELb1EEv9VarParams.kd`
+  - `_Z10k_conv_res10ConvParams.kd`
+  - `_Z11k_conv_res211Conv2Params.kd`
+  - `_Z11k_reproject12ReprojParams.kd`
+  - `g_e4m3_lut`
+  - `_Z7k_ffwd211Ffwd2Params.kd`
+  - `_Z16k_swin_1h_32_fp810SwinParams.kd`
+  - `_Z21k_pre_block_1h_32_fp89PreParams.kd`
+  - `_Z22k_post_block_1h_32_fp810PostParams.kd`
+  - `_Z6k_ffwd10FfwdParams.kd`
+  - `_Z10k_conv_res10ConvParams.kd`
+  - `_Z10k_qkv_attn10AttnParams.kd`
+  - `_Z7k_ffwd211Ffwd2Params.kd`
+  - `_Z11k_conv_res211Conv2Params.kd`
+  - `_Z11k_qkv_attn210AttnParams.kd`
+  - `_Z8k_expand12ExpandParams.kd`
+  - `_Z13k_conv_splitk12ConvParams1d.kd`
+  - `_Z5k_qkv9QkvParams.kd`
+  - `_Z11k_attention12AttnParams1d.kd`
+  - `_Z9k_expand212ExpandParams.kd`
+  - `_Z11k_contract212ConvParams1d.kd`
+  - `_Z6k_qkv29QkvParams.kd`
+  - `_Z12k_attention212AttnParams1d.kd`
+  - `_Z14k_ffwd_inpview12FfwdPlParams.kd`
+  - `_Z16k_conv_res_views12ConvPlParams.kd`
+  - `_Z12k_final_head10HeadParams.kd`
+  - `_Z8k_repack12RepackParams.kd`
+  - `_Z14k_dec_upsample11DecUpParams.kd`
+  - `_Z6k_mean10MeanParams.kd`
+  - `_Z8k_import12ImportParams.kd`
+  - `_Z8k_export12ExportParams.kd`
+  - `_Z11k_reproject12ReprojParams.kd`
+  - `_Z11k_flag_waitPjjj.kd`
+  - `_Z10k_flag_setPjj.kd`
+  - `_Z10k_swin_varILi32ELb1EEv9VarParams.kd`
+  - `_Z10k_swin_varILi32ELb0EEv9VarParams.kd`
+  - `_Z10k_swin_varILi64ELb0EEv9VarParams.kd`
+  - `_Z10k_swin_varILi128ELb0EEv9VarParams.kd`
+  - `_Z10k_swin_varILi256ELb0EEv9VarParams.kd`
+  - `g_e4m3_lut`
