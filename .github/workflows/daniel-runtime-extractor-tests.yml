@@ -1,0 +1,61 @@
+name: Daniel official runtime extractor tests
+
+on:
+  push:
+    branches:
+      - research/daniel-runtime-analysis-20260904
+    paths:
+      - research/daniel/extract_official_runtime.py
+      - .github/workflows/daniel-runtime-extractor-tests.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/daniel-runtime-analysis-20260904
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PE parser
+        run: python -m pip install --disable-pip-version-check pefile==2024.8.26
+      - name: Inspect pinned public release
+        run: |
+          python research/daniel/extract_official_runtime.py \
+            /tmp/version.dll \
+            --inspect-only \
+            --report /tmp/inspect.json
+          test ! -e /tmp/version.dll
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/inspect.json').read_text(encoding='utf-8'))
+          assert report['analysis_mode'] == 'static_extract_never_executed'
+          assert report['verified'] is True
+          assert report['runtime_offset'] == 0x3A800
+          assert report['runtime_size'] == 4548096
+          assert report['runtime_sha256'] == '69d06ea9fc78abc22d403a3108c38f897d76be52d409209ef08ed4743ab8ded2'
+          assert 'amdhip64_7.dll' in {name.lower(): name for name in report['imports']}
+          required = {
+              'DirectInput8Create', 'DllCanUnloadNow', 'DllGetClassObject',
+              'DllRegisterServer', 'DllUnregisterServer'
+          }
+          assert required.issubset(set(report['exports']))
+          PY
+      - name: Extract, verify, then remove proprietary binary
+        run: |
+          python research/daniel/extract_official_runtime.py \
+            /tmp/version.dll \
+            --report /tmp/extract.json
+          test "$(stat -c %s /tmp/version.dll)" = "4548096"
+          test "$(sha256sum /tmp/version.dll | cut -d' ' -f1)" = \
+            "69d06ea9fc78abc22d403a3108c38f897d76be52d409209ef08ed4743ab8ded2"
+          file /tmp/version.dll | grep -E 'PE32\+.*DLL.*x86-64'
+          rm -f /tmp/version.dll
+          test ! -e /tmp/version.dll
