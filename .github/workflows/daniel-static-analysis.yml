@@ -1,0 +1,65 @@
+name: Daniel runtime static analysis
+
+on:
+  push:
+    branches:
+      - research/daniel-runtime-analysis-20260904
+    paths:
+      - .github/workflows/daniel-static-analysis.yml
+      - research/daniel/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out research branch
+        uses: actions/checkout@v4
+
+      - name: Configure Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install static-analysis dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            binutils cabextract file innoextract p7zip-full
+          python -m pip install --disable-pip-version-check pefile==2024.8.26
+
+      - name: Analyze public installer without executing it
+        run: |
+          rm -rf analysis-output
+          python research/daniel/analyze_installer.py \
+            --url "https://github.com/danielblnc/DLSS-NR-on-AMD/releases/download/v0.2.9/dlssnr_on_amd_setup.exe" \
+            --expected-sha256 "b4b31e19e1d9028b3d63b7ac5074d7f71ede736d6185c11d25863f6415c6ece9" \
+            --output analysis-output
+
+      - name: Enforce static-only artifact policy
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("analysis-output")
+          report = json.loads((root / "report.json").read_text(encoding="utf-8"))
+          assert report["analysis_mode"] == "static_only_never_executed"
+          assert report["expected_sha256_matched"] is True
+          forbidden = {".exe", ".dll", ".bin", ".so", ".cubin", ".hsaco"}
+          leaked = [str(p) for p in root.rglob("*") if p.is_file() and p.suffix.lower() in forbidden]
+          assert not leaked, leaked
+          print((root / "report.md").read_text(encoding="utf-8"))
+          PY
+
+      - name: Upload metadata-only report
+        uses: actions/upload-artifact@v4
+        with:
+          name: daniel-v0.2.9-static-analysis
+          path: analysis-output/
+          if-no-files-found: error
+          retention-days: 14
