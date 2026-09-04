@@ -1,0 +1,82 @@
+name: Daniel route staging smoke test
+
+on:
+  push:
+    branches:
+      - research/daniel-runtime-analysis-20260904
+    paths:
+      - research/daniel/prepare_daniel_runtime.py
+      - research/daniel/pack_private_zip_by_contract.py
+      - research/daniel/extract_official_runtime.py
+      - research/daniel/dlssnrw1.py
+      - .github/workflows/daniel-route-smoke.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/daniel-runtime-analysis-20260904
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PE parser
+        run: python -m pip install --disable-pip-version-check pefile==2024.8.26
+      - name: Create synthetic private tensor archive
+        run: |
+          python - <<'PY'
+          import json, zipfile
+          from pathlib import Path
+          root = Path('/tmp/dlssnr-smoke')
+          root.mkdir(parents=True)
+          tensors = [
+              {'ordinal': 0, 'name': 'block0.layer0.layer', 'byte_size': 3},
+              {'ordinal': 1, 'name': 'block70.layer0.blend_scale', 'byte_size': 2},
+          ]
+          (root / 'contract.json').write_text(
+              json.dumps({'count': len(tensors), 'tensors': tensors}), encoding='utf-8'
+          )
+          with zipfile.ZipFile(root / 'private.zip', 'w', zipfile.ZIP_DEFLATED) as zf:
+              zf.writestr('weights/block70.layer0.blend_scale.bin', b'xy')
+              zf.writestr('weights/block0.layer0.layer.bin', b'abc')
+          PY
+      - name: Prepare game directory through pinned official runtime route
+        working-directory: research/daniel
+        run: |
+          python prepare_daniel_runtime.py \
+            /tmp/dlssnr-smoke/private.zip \
+            /tmp/dlssnr-smoke/game \
+            --contract /tmp/dlssnr-smoke/contract.json
+      - name: Validate installed contract, hashes and no private leakage
+        working-directory: research/daniel
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          from dlssnrw1 import iter_tensor_bytes, read_index
+          game = Path('/tmp/dlssnr-smoke/game')
+          runtime = game / 'version.dll'
+          weights = game / 'dlssnr_on_amd_weights.bin'
+          report = json.loads((game / 'dlssnr_install_report.json').read_text(encoding='utf-8'))
+          assert runtime.stat().st_size == 4548096
+          assert hashlib.sha256(runtime.read_bytes()).hexdigest() == '69d06ea9fc78abc22d403a3108c38f897d76be52d409209ef08ed4743ab8ded2'
+          parsed = read_index(weights, require_dense=True)
+          assert parsed.count == 2
+          assert {entry.name: data for entry, data in iter_tensor_bytes(weights)} == {
+              'block0.layer0.layer': b'abc',
+              'block70.layer0.blend_scale': b'xy',
+          }
+          assert report['status'] == 'INSTALLED'
+          assert report['route'] == 'daniel-v0.2.9-custom-hip'
+          assert report['success_gate']['static_and_weight_contract'] is True
+          assert report['success_gate']['runtime_execution_on_supported_gpu'] is False
+          assert not (game / 'dlssnr_on_amd.ini').exists()
+          PY
+          rm -rf /tmp/dlssnr-smoke
+          test ! -e /tmp/dlssnr-smoke
