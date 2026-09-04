@@ -7,8 +7,10 @@ on:
     paths:
       - research/daniel/dlssnrw1.py
       - research/daniel/private_inventory_to_dlssnrw1.py
+      - research/daniel/pack_private_by_contract.py
       - research/daniel/test_dlssnrw1.py
       - research/daniel/test_private_inventory_to_dlssnrw1.py
+      - research/daniel/test_pack_private_by_contract.py
       - src/dlssnr_weights.hpp
       - tests/dlssnr_weights_test.cpp
       - .github/workflows/dlssnrw1-tests.yml
@@ -28,11 +30,15 @@ jobs:
           python-version: "3.12"
       - name: Install test dependency
         run: python -m pip install --disable-pip-version-check pytest==8.4.2
-      - name: Test Python container and private-inventory conversion
+      - name: Test Python container and private conversion paths
         working-directory: research/daniel
         run: |
-          python -m py_compile dlssnrw1.py private_inventory_to_dlssnrw1.py
-          pytest -q test_dlssnrw1.py test_private_inventory_to_dlssnrw1.py
+          python -m py_compile \
+            dlssnrw1.py private_inventory_to_dlssnrw1.py pack_private_by_contract.py
+          pytest -q \
+            test_dlssnrw1.py \
+            test_private_inventory_to_dlssnrw1.py \
+            test_pack_private_by_contract.py
       - name: Test C++ runtime loader
         run: |
           g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror \
