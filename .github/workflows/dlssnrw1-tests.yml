@@ -12,7 +12,10 @@ on:
       - research/daniel/test_private_inventory_to_dlssnrw1.py
       - research/daniel/test_pack_private_by_contract.py
       - src/dlssnr_weights.hpp
+      - src/dlssnr_weight_api.h
+      - src/dlssnr_weight_api.cpp
       - tests/dlssnr_weights_test.cpp
+      - tests/dlssnr_weight_api_test.cpp
       - .github/workflows/dlssnrw1-tests.yml
   workflow_dispatch:
 
@@ -39,8 +42,14 @@ jobs:
             test_dlssnrw1.py \
             test_private_inventory_to_dlssnrw1.py \
             test_pack_private_by_contract.py
-      - name: Test C++ runtime loader
+      - name: Test C++ loader
         run: |
           g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror \
             tests/dlssnr_weights_test.cpp -o /tmp/dlssnr_weights_test
           /tmp/dlssnr_weights_test
+      - name: Test C weight API
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror \
+            src/dlssnr_weight_api.cpp tests/dlssnr_weight_api_test.cpp \
+            -o /tmp/dlssnr_weight_api_test
+          /tmp/dlssnr_weight_api_test
