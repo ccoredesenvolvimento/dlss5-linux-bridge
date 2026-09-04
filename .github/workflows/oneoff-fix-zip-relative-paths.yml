@@ -1,0 +1,96 @@
+name: One-off fix ZIP relative paths
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/daniel-runtime-analysis-20260904
+      - name: Apply narrow source patch
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('research/daniel/pack_private_zip_by_contract.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''def _resolve_member_reference(
+              value: Any,
+              inventory_member: str,
+              exact: dict[str, zipfile.ZipInfo],
+              by_basename: dict[str, list[str]],
+          ) -> str:
+              if not isinstance(value, str) or not value.strip():
+                  raise MappingError("inventory record has no source member")
+              supplied = _safe_member_name(value.strip())
+              parent = str(PurePosixPath(inventory_member).parent)
+              relative = _safe_member_name(posixpath.join(parent, supplied)) if parent != "." else supplied
+              for candidate in (supplied, relative):
+                  if candidate in exact:
+                      return candidate
+              basename_matches = by_basename.get(PurePosixPath(supplied).name, [])
+              if len(basename_matches) == 1:
+                  return basename_matches[0]
+              if len(basename_matches) > 1:
+                  raise MappingError(
+                      f"inventory reference {value!r} is ambiguous: {basename_matches[:8]}"
+                  )
+              raise MappingError(f"inventory reference does not exist in ZIP: {value!r}")
+          '''
+          new = '''def _resolve_member_reference(
+              value: Any,
+              inventory_member: str,
+              exact: dict[str, zipfile.ZipInfo],
+              by_basename: dict[str, list[str]],
+          ) -> str:
+              if not isinstance(value, str) or not value.strip():
+                  raise MappingError("inventory record has no source member")
+              raw = value.strip().replace("\\\\", "/")
+              if "\\x00" in raw or raw.startswith("/"):
+                  raise MappingError(f"unsafe inventory member reference: {value!r}")
+              parent = str(PurePosixPath(inventory_member).parent)
+              supplied = posixpath.normpath(raw)
+              relative = posixpath.normpath(posixpath.join(parent, raw))
+              candidates: list[str] = []
+              for candidate in (supplied, relative):
+                  if candidate == ".." or candidate.startswith("../"):
+                      continue
+                  if candidate not in candidates:
+                      candidates.append(candidate)
+              for candidate in candidates:
+                  if candidate in exact:
+                      return candidate
+              basename_matches = by_basename.get(PurePosixPath(raw).name, [])
+              if len(basename_matches) == 1:
+                  return basename_matches[0]
+              if len(basename_matches) > 1:
+                  raise MappingError(
+                      f"inventory reference {value!r} is ambiguous: {basename_matches[:8]}"
+                  )
+              raise MappingError(f"inventory reference does not exist in ZIP: {value!r}")
+          '''
+          # Dedent exact source fragments because this heredoc is intentionally indented.
+          import textwrap
+          old = textwrap.dedent(old)
+          new = textwrap.dedent(new)
+          if old not in text:
+              raise SystemExit('expected source block not found; refusing broad patch')
+          updated = text.replace(old, new, 1)
+          if updated == text:
+              raise SystemExit('source did not change')
+          path.write_text(updated, encoding='utf-8')
+          PY
+          git diff --check
+          git diff -- research/daniel/pack_private_zip_by_contract.py
+      - name: Commit patched source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/daniel/pack_private_zip_by_contract.py
+          git commit -m "fix: resolve safe relative paths in ZIP inventories"
+          git push origin HEAD:research/daniel-runtime-analysis-20260904
