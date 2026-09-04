@@ -40,7 +40,7 @@ jobs:
             --expected-sha256 "b4b31e19e1d9028b3d63b7ac5074d7f71ede736d6185c11d25863f6415c6ece9" \
             --output analysis-output
 
-      - name: Enforce static-only artifact policy
+      - name: Enforce static-only artifact policy and print detailed evidence
         run: |
           python - <<'PY'
           import json
@@ -53,7 +53,23 @@ jobs:
           forbidden = {".exe", ".dll", ".bin", ".so", ".cubin", ".hsaco"}
           leaked = [str(p) for p in root.rglob("*") if p.is_file() and p.suffix.lower() in forbidden]
           assert not leaked, leaked
+
           print((root / "report.md").read_text(encoding="utf-8"))
+          installer = report["installer"]
+          pe = installer.get("pe", {})
+          print("\n=== PE SECTIONS ===")
+          print(json.dumps(pe.get("sections", []), indent=2, ensure_ascii=False))
+          print("\n=== PE IMPORTS ===")
+          print(json.dumps(pe.get("imports", []), indent=2, ensure_ascii=False))
+          print("\n=== PE EXPORTS ===")
+          print(json.dumps(pe.get("exports", []), indent=2, ensure_ascii=False))
+          print("\n=== EMBEDDED MAGIC OFFSETS ===")
+          print(json.dumps(installer.get("magic_offsets", {}), indent=2))
+          print("\n=== SELECTED STRINGS WITH FILE OFFSETS ===")
+          for hit in installer.get("interesting_strings", []):
+              print(f"0x{hit['offset']:08x}\t{hit['encoding']}\t{hit['value']}")
+          print("\n=== 7Z CONTAINER PROBE ===")
+          print((root / "7z-list.txt").read_text(encoding="utf-8", errors="replace"))
           PY
 
       - name: Upload metadata-only report
