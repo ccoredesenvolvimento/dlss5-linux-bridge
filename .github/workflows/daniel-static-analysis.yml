@@ -15,7 +15,7 @@ permissions:
 jobs:
   analyze:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Check out research branch
         uses: actions/checkout@v4
@@ -29,18 +29,24 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            binutils cabextract file innoextract p7zip-full
-          python -m pip install --disable-pip-version-check pefile==2024.8.26
+            binutils cabextract file innoextract llvm p7zip-full
+          python -m pip install --disable-pip-version-check \
+            pefile==2024.8.26 pyelftools==0.32
 
       - name: Analyze public installer without executing it
         run: |
           rm -rf analysis-output
+          mkdir -p analysis-output
           python research/daniel/analyze_installer.py \
             --url "https://github.com/danielblnc/DLSS-NR-on-AMD/releases/download/v0.2.9/dlssnr_on_amd_setup.exe" \
             --expected-sha256 "b4b31e19e1d9028b3d63b7ac5074d7f71ede736d6185c11d25863f6415c6ece9" \
             --output analysis-output
+          python research/daniel/carve_payloads.py \
+            --url "https://github.com/danielblnc/DLSS-NR-on-AMD/releases/download/v0.2.9/dlssnr_on_amd_setup.exe" \
+            --expected-sha256 "b4b31e19e1d9028b3d63b7ac5074d7f71ede736d6185c11d25863f6415c6ece9" \
+            --output analysis-output
 
-      - name: Enforce static-only artifact policy and print detailed evidence
+      - name: Enforce static-only artifact policy and print evidence
         run: |
           python - <<'PY'
           import json
@@ -48,28 +54,58 @@ jobs:
 
           root = Path("analysis-output")
           report = json.loads((root / "report.json").read_text(encoding="utf-8"))
+          payloads = json.loads((root / "payload-map.json").read_text(encoding="utf-8"))
           assert report["analysis_mode"] == "static_only_never_executed"
+          assert payloads["analysis_mode"] == "static_only_never_executed"
           assert report["expected_sha256_matched"] is True
-          forbidden = {".exe", ".dll", ".bin", ".so", ".cubin", ".hsaco"}
+          assert payloads["installer_sha256"] == report["installer"]["sha256"]
+          forbidden = {".exe", ".dll", ".bin", ".so", ".cubin", ".hsaco", ".elf"}
           leaked = [str(p) for p in root.rglob("*") if p.is_file() and p.suffix.lower() in forbidden]
           assert not leaked, leaked
 
           print((root / "report.md").read_text(encoding="utf-8"))
+          print((root / "payload-map.md").read_text(encoding="utf-8"))
+
           installer = report["installer"]
           pe = installer.get("pe", {})
           print("\n=== PE SECTIONS ===")
           print(json.dumps(pe.get("sections", []), indent=2, ensure_ascii=False))
           print("\n=== PE IMPORTS ===")
           print(json.dumps(pe.get("imports", []), indent=2, ensure_ascii=False))
-          print("\n=== PE EXPORTS ===")
-          print(json.dumps(pe.get("exports", []), indent=2, ensure_ascii=False))
           print("\n=== EMBEDDED MAGIC OFFSETS ===")
           print(json.dumps(installer.get("magic_offsets", {}), indent=2))
           print("\n=== SELECTED STRINGS WITH FILE OFFSETS ===")
           for hit in installer.get("interesting_strings", []):
               print(f"0x{hit['offset']:08x}\t{hit['encoding']}\t{hit['value']}")
-          print("\n=== 7Z CONTAINER PROBE ===")
-          print((root / "7z-list.txt").read_text(encoding="utf-8", errors="replace"))
+
+          print("\n=== VALID PE PAYLOAD DETAILS ===")
+          for item in payloads["pe_candidates"]:
+              print(json.dumps({
+                  "offset": item["offset"],
+                  "kind": item["kind"],
+                  "intrinsic_size": item["intrinsic_size"],
+                  "sha256": item["intrinsic_sha256"],
+                  "sections": item["sections"],
+                  "imports": item["imports"],
+                  "exports": item["exports"],
+                  "resources": item["resources"],
+              }, indent=2, ensure_ascii=False))
+
+          print("\n=== AMDGPU PAYLOAD DETAILS ===")
+          for index, item in enumerate(payloads["elf_candidates"]):
+              print(json.dumps({
+                  "index": index,
+                  "offset": item["offset"],
+                  "machine": item["machine"],
+                  "intrinsic_size": item["intrinsic_size"],
+                  "sha256": item["intrinsic_sha256"],
+                  "kernel_symbols": item["kernel_symbols"],
+                  "notes": item["notes"],
+              }, indent=2, ensure_ascii=False))
+              artifact = root / f"elf-{index}-tool-report.txt"
+              if artifact.exists():
+                  print(f"\n=== {artifact.name} ===")
+                  print(artifact.read_text(encoding="utf-8", errors="replace"))
           PY
 
       - name: Upload metadata-only report
