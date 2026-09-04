@@ -29,3 +29,23 @@ jobs:
         run: python -m compileall -q portable/src
       - name: Run reference and format tests
         run: pytest -q portable/tests
+
+  webgpu-typescript:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: portable/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: portable/web/package-lock.json
+      - name: Install exact dependencies
+        run: npm install --package-lock-only && npm ci
+      - name: Type-check WebGPU runtime
+        run: npm run check
+      - name: Build browser package
+        run: npm run build
