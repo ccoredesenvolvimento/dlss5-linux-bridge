@@ -79,14 +79,14 @@ def test_json_inventory_can_reference_slices(tmp_path: Path) -> None:
             {
                 "ordinal": 2,
                 "name": "block70.layer0.blend_scale",
-                "container_path": "../containers/all.blob",
+                "container_path": "private/containers/all.blob",
                 "byte_offset": 17,
                 "byte_size": 2,
             },
             {
                 "ordinal": 0,
                 "name": "block0.layer0.layer",
-                "container_path": "../containers/all.blob",
+                "container_path": "private/containers/all.blob",
                 "byte_offset": 11,
                 "byte_size": 3,
                 "sha256": hashlib.sha256(payloads["block0.layer0.layer"]).hexdigest(),
@@ -94,7 +94,7 @@ def test_json_inventory_can_reference_slices(tmp_path: Path) -> None:
             {
                 "ordinal": 1,
                 "name": "block1.layer0.layer",
-                "container_path": "../containers/all.blob",
+                "container_path": "private/containers/all.blob",
                 "byte_offset": 6,
                 "byte_size": 5,
             },
