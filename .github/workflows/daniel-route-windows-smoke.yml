@@ -1,0 +1,88 @@
+name: Daniel route Windows smoke test
+
+on:
+  push:
+    branches:
+      - research/daniel-runtime-analysis-20260904
+    paths:
+      - research/daniel/prepare_daniel_runtime.py
+      - research/daniel/verify_daniel_game_dir.py
+      - research/daniel/pack_private_zip_by_contract.py
+      - research/daniel/extract_official_runtime.py
+      - research/daniel/dlssnrw1.py
+      - research/daniel/prepare_daniel_runtime.ps1
+      - .github/workflows/daniel-route-windows-smoke.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stage-windows:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/daniel-runtime-analysis-20260904
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PE parser
+        run: python -m pip install --disable-pip-version-check pefile==2024.8.26
+      - name: Create synthetic private package
+        shell: pwsh
+        run: |
+          @'
+          import json, zipfile
+          from pathlib import Path
+          root=Path(r'D:\a\dlssnr-smoke')
+          root.mkdir(parents=True,exist_ok=True)
+          tensors=[
+            {'ordinal':0,'name':'block0.layer0.layer','byte_size':3},
+            {'ordinal':1,'name':'block70.layer0.blend_scale','byte_size':2},
+          ]
+          (root/'contract.json').write_text(json.dumps({'count':2,'tensors':tensors}),encoding='utf-8')
+          with zipfile.ZipFile(root/'private.zip','w',zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr('weights/block70.layer0.blend_scale.bin',b'xy')
+            zf.writestr('weights/block0.layer0.layer.bin',b'abc')
+          '@ | python -
+      - name: Prepare and verify game directory
+        shell: pwsh
+        working-directory: research/daniel
+        run: |
+          python prepare_daniel_runtime.py `
+            D:\a\dlssnr-smoke\private.zip `
+            D:\a\dlssnr-smoke\game `
+            --contract D:\a\dlssnr-smoke\contract.json
+          if ($LASTEXITCODE -ne 0) { throw "prepare failed: $LASTEXITCODE" }
+          python verify_daniel_game_dir.py `
+            D:\a\dlssnr-smoke\game `
+            --contract D:\a\dlssnr-smoke\contract.json `
+            --report D:\a\dlssnr-smoke\verification.json
+          if ($LASTEXITCODE -ne 0) { throw "verify failed: $LASTEXITCODE" }
+      - name: Assert pinned runtime and container contract
+        shell: pwsh
+        run: |
+          @'
+          import hashlib, json
+          from pathlib import Path
+          root=Path(r'D:\a\dlssnr-smoke')
+          game=root/'game'
+          runtime=game/'version.dll'
+          weights=game/'dlssnr_on_amd_weights.bin'
+          install=json.loads((game/'dlssnr_install_report.json').read_text(encoding='utf-8'))
+          verify=json.loads((root/'verification.json').read_text(encoding='utf-8'))
+          assert runtime.stat().st_size==4548096
+          assert hashlib.sha256(runtime.read_bytes()).hexdigest()=='69d06ea9fc78abc22d403a3108c38f897d76be52d409209ef08ed4743ab8ded2'
+          assert install['status']=='INSTALLED'
+          assert install['success_gate']['static_and_weight_contract'] is True
+          assert verify['status']=='STATIC_CONTRACT_VERIFIED'
+          assert verify['weights']['tensor_count']==2
+          assert verify['gpu_frame_executed'] is False
+          assert weights.is_file()
+          '@ | python -
+      - name: Remove runtime and synthetic payload
+        if: always()
+        shell: pwsh
+        run: Remove-Item -LiteralPath D:\a\dlssnr-smoke -Recurse -Force -ErrorAction SilentlyContinue
