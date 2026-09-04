@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dlssnr-portable"
+version = "0.1.0"
+description = "Vendor-neutral reconstruction tools and reference runtime for DLSS-NR model evidence"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = [
+  "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+onnx = [
+  "onnx>=1.16",
+  "onnxruntime>=1.18",
+]
+torch = [
+  "torch>=2.3",
+]
+test = [
+  "pytest>=8",
+]
+
+[project.scripts]
+dlssnr-portable-import = "dlssnr_portable.import_private:main"
+dlssnr-portable-inspect = "dlssnr_portable.inspect:main"
+dlssnr-portable-export-onnx = "dlssnr_portable.export_onnx:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
