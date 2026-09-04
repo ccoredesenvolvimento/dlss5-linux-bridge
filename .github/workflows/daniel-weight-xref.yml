@@ -20,6 +20,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: research/daniel-runtime-analysis-20260904
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -44,5 +45,6 @@ jobs:
           git add research/daniel/results/pe-xrefs.md research/daniel/results/pe-xrefs.json
           if ! git diff --cached --quiet; then
             git commit -m "research: publish sanitized weight xrefs [skip ci]"
+            git pull --rebase origin research/daniel-runtime-analysis-20260904
             git push origin HEAD:research/daniel-runtime-analysis-20260904
           fi
