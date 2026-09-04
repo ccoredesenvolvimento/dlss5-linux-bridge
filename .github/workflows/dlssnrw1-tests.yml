@@ -8,9 +8,11 @@ on:
       - research/daniel/dlssnrw1.py
       - research/daniel/private_inventory_to_dlssnrw1.py
       - research/daniel/pack_private_by_contract.py
+      - research/daniel/pack_private_zip_by_contract.py
       - research/daniel/test_dlssnrw1.py
       - research/daniel/test_private_inventory_to_dlssnrw1.py
       - research/daniel/test_pack_private_by_contract.py
+      - research/daniel/test_pack_private_zip_by_contract.py
       - src/dlssnr_weights.hpp
       - src/dlssnr_weight_api.h
       - src/dlssnr_weight_api.cpp
@@ -28,6 +30,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: research/daniel-runtime-analysis-20260904
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -37,11 +41,15 @@ jobs:
         working-directory: research/daniel
         run: |
           python -m py_compile \
-            dlssnrw1.py private_inventory_to_dlssnrw1.py pack_private_by_contract.py
+            dlssnrw1.py \
+            private_inventory_to_dlssnrw1.py \
+            pack_private_by_contract.py \
+            pack_private_zip_by_contract.py
           pytest -q \
             test_dlssnrw1.py \
             test_private_inventory_to_dlssnrw1.py \
-            test_pack_private_by_contract.py
+            test_pack_private_by_contract.py \
+            test_pack_private_zip_by_contract.py
       - name: Test C++ loader
         run: |
           g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror \
