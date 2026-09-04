@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   analyze:
@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Check out research branch
         uses: actions/checkout@v4
+        with:
+          ref: research/daniel-runtime-analysis-20260904
 
       - name: Configure Python
         uses: actions/setup-python@v5
@@ -50,7 +52,7 @@ jobs:
           python research/daniel/summarize_contract.py \
             --input analysis-output --output analysis-output --radius 14
 
-      - name: Enforce static-only policy and print compact contract
+      - name: Verify metadata-only policy
         run: |
           python - <<'PY'
           import json
@@ -74,7 +76,8 @@ jobs:
           assert not leaked, leaked
 
           compact = reports[4]
-          print("=== CONTRACT COUNTS ===")
+          assert compact["pe_image_count"] >= 2
+          assert len(compact["amdgpu_code_objects"]) >= 1
           print(json.dumps({
               "installer_sha256": compact["installer_sha256"],
               "pe_images": compact["pe_image_count"],
@@ -82,45 +85,24 @@ jobs:
               "amdgpu_code_objects": len(compact["amdgpu_code_objects"]),
               "kernels": sum(len(x["kernels"]) for x in compact["amdgpu_code_objects"]),
           }, indent=2))
-
-          print("\n=== WEIGHT-CONTAINER AND RECOGNITION XREFS ===")
-          for fn in compact["contract_functions"]:
-              if fn["category"] not in {"weight_container", "weight_recognition"}:
-                  continue
-              print(json.dumps({
-                  "pe_index": fn["pe_index"],
-                  "pe_offset": fn["pe_offset"],
-                  "category": fn["category"],
-                  "begin_rva": fn["function_begin_rva"],
-                  "end_rva": fn["function_end_rva"],
-                  "size": fn["function_size"],
-                  "targets": fn["targets"],
-              }, indent=2, ensure_ascii=False))
-              for window in fn["windows"]:
-                  print("--- XREF WINDOW ---")
-                  print("\n".join(window["lines"]))
-
-          print("\n=== AMDGPU ABI SUMMARY ===")
-          for obj in compact["amdgpu_code_objects"]:
-              print(json.dumps({
-                  "index": obj["index"],
-                  "offset": obj["offset"],
-                  "size": obj["size"],
-                  "targets": obj["targets"],
-                  "metadata_versions": obj["metadata_versions"],
-                  "kernels": [{
-                      "name": k["name"],
-                      "symbol": k["symbol"],
-                      "kernarg_segment_size": k["kernarg_segment_size"],
-                      "group_segment_fixed_size": k["group_segment_fixed_size"],
-                      "sgpr_count": k["sgpr_count"],
-                      "vgpr_count": k["vgpr_count"],
-                      "max_flat_workgroup_size": k["max_flat_workgroup_size"],
-                      "wavefront_size": k["wavefront_size"],
-                      "args": k["args"],
-                  } for k in obj["kernels"]],
-              }, indent=2, ensure_ascii=False))
           PY
+
+      - name: Publish sanitized contract reports
+        run: |
+          mkdir -p research/daniel/results
+          cp analysis-output/contract-summary.md research/daniel/results/contract-summary.md
+          cp analysis-output/contract-summary.json research/daniel/results/contract-summary.json
+          cp analysis-output/amdgpu-abi.md research/daniel/results/amdgpu-abi.md
+          cp analysis-output/amdgpu-abi.json research/daniel/results/amdgpu-abi.json
+          cp analysis-output/payload-map.md research/daniel/results/payload-map.md
+          cp analysis-output/payload-map.json research/daniel/results/payload-map.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/daniel/results
+          if ! git diff --cached --quiet; then
+            git commit -m "research: update sanitized Daniel contract [skip ci]"
+            git push origin HEAD:research/daniel-runtime-analysis-20260904
+          fi
 
       - name: Upload metadata-only report
         uses: actions/upload-artifact@v4
