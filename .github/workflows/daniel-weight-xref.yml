@@ -42,7 +42,8 @@ jobs:
           cp xref-output/pe-xrefs.json research/daniel/results/pe-xrefs.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add research/daniel/results/pe-xrefs.md research/daniel/results/pe-xrefs.json
+          git add research/daniel/results/pe-xrefs.md
+          git add -f research/daniel/results/pe-xrefs.json
           if ! git diff --cached --quiet; then
             git commit -m "research: publish sanitized weight xrefs [skip ci]"
             git pull --rebase origin research/daniel-runtime-analysis-20260904
