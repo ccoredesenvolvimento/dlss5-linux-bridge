@@ -1,0 +1,31 @@
+name: Portable DLSS-NR core
+
+on:
+  push:
+    branches:
+      - research/portable-dlssnr-webgpu
+    paths:
+      - portable/**
+      - .github/workflows/portable-dlssnr.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-reference:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: portable/pyproject.toml
+      - name: Install package
+        run: python -m pip install --disable-pip-version-check -e './portable[test]'
+      - name: Compile modules
+        run: python -m compileall -q portable/src
+      - name: Run reference and format tests
+        run: pytest -q portable/tests
