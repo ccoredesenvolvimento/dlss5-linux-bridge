@@ -23,8 +23,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install PE parser
-        run: python -m pip install --disable-pip-version-check pefile==2024.8.26
+      - name: Install PE parser and static string tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends binutils file
+          python -m pip install --disable-pip-version-check pefile==2024.8.26
       - name: Inspect pinned public release
         run: |
           python research/daniel/extract_official_runtime.py \
@@ -48,7 +51,7 @@ jobs:
           }
           assert required.issubset(set(report['exports']))
           PY
-      - name: Extract, verify, then remove proprietary binary
+      - name: Extract, inspect configuration contract, verify, then remove binary
         run: |
           python research/daniel/extract_official_runtime.py \
             /tmp/version.dll \
@@ -57,5 +60,13 @@ jobs:
           test "$(sha256sum /tmp/version.dll | cut -d' ' -f1)" = \
             "69d06ea9fc78abc22d403a3108c38f897d76be52d409209ef08ed4743ab8ded2"
           file /tmp/version.dll | grep -E 'PE32\+.*DLL.*x86-64'
+          echo '=== ASCII CONFIG/FILE STRINGS ==='
+          strings -a -n 4 /tmp/version.dll | \
+            grep -Eai '(^|[^A-Za-z])(dlssnr|weights\.bin|\.ini|\.log|NO_REPACK|NOPOSTHIST|NOBLEND|SLOW_PREPOST|WBLOG|STAGES)([^A-Za-z]|$)' | \
+            sort -u | head -400 || true
+          echo '=== UTF16LE CONFIG/FILE STRINGS ==='
+          strings -a -el -n 4 /tmp/version.dll | \
+            grep -Eai '(^|[^A-Za-z])(dlssnr|weights\.bin|\.ini|\.log|NO_REPACK|NOPOSTHIST|NOBLEND|SLOW_PREPOST|WBLOG|STAGES)([^A-Za-z]|$)' | \
+            sort -u | head -400 || true
           rm -f /tmp/version.dll
           test ! -e /tmp/version.dll
