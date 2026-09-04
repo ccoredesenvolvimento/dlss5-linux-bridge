@@ -1,0 +1,84 @@
+name: DLSSNR tensor contract
+
+on:
+  push:
+    branches:
+      - research/daniel-runtime-analysis-20260904
+    paths:
+      - research/daniel/extract_tensor_contract.py
+      - .github/workflows/dlssnr-tensor-contract.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/daniel-runtime-analysis-20260904
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install parser
+        run: python -m pip install --disable-pip-version-check pefile==2024.8.26
+      - name: Extract names and sizes without executing installer
+        run: |
+          rm -rf tensor-contract-output
+          python research/daniel/extract_tensor_contract.py \
+            --url "https://github.com/danielblnc/DLSS-NR-on-AMD/releases/download/v0.2.9/dlssnr_on_amd_setup.exe" \
+            --expected-sha256 "b4b31e19e1d9028b3d63b7ac5074d7f71ede736d6185c11d25863f6415c6ece9" \
+            --table-rva 0x26860 \
+            --count 153 \
+            --output tensor-contract-output
+      - name: Validate contract invariants
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("tensor-contract-output/tensor-contract.json")
+          contract = json.loads(path.read_text(encoding="utf-8"))
+          tensors = contract["tensors"]
+          assert contract["count"] == 153
+          assert len(tensors) == 153
+          assert len({item["name"] for item in tensors}) == 153
+          assert [item["ordinal"] for item in tensors] == list(range(153))
+          assert all(item["byte_size"] > 0 for item in tensors)
+          assert contract["dlssnrw1"]["payload_size"] == sum(item["byte_size"] for item in tensors)
+          assert contract["dlssnrw1"]["data_offset"] == 16 + sum(
+              1 + len(item["name"].encode("utf-8")) + 16 for item in tensors
+          )
+          print(json.dumps({
+              "count": len(tensors),
+              "payload_size": contract["dlssnrw1"]["payload_size"],
+              "data_offset": contract["dlssnrw1"]["data_offset"],
+              "predicted_file_size": contract["dlssnrw1"]["predicted_file_size"],
+              "first": tensors[:3],
+              "last": tensors[-3:],
+          }, indent=2, ensure_ascii=False))
+          PY
+          ! find tensor-contract-output -type f \( -name '*.exe' -o -name '*.dll' -o -name '*.bin' -o -name '*.elf' -o -name '*.hsaco' \) | grep .
+      - name: Publish sanitized contract
+        run: |
+          mkdir -p research/daniel/results
+          cp tensor-contract-output/tensor-contract.md research/daniel/results/tensor-contract.md
+          cp tensor-contract-output/tensor-contract.json research/daniel/results/tensor-contract.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/daniel/results/tensor-contract.md
+          git add -f research/daniel/results/tensor-contract.json
+          if ! git diff --cached --quiet; then
+            git commit -m "research: publish exact 153-tensor contract [skip ci]"
+            git pull --rebase origin research/daniel-runtime-analysis-20260904
+            git push origin HEAD:research/daniel-runtime-analysis-20260904
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dlssnr-v0.2.9-tensor-contract
+          path: tensor-contract-output/
+          if-no-files-found: error
+          retention-days: 14
