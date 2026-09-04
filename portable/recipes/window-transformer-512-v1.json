@@ -1,0 +1,118 @@
+{
+  "schema": "dlssnr-canonicalization-recipe-v1",
+  "name": "window-transformer-512-v1",
+  "source_records": {
+    "layer0": {"nbytes": 524288, "dtype": "<f2"},
+    "layer1": {"nbytes": 263168, "dtype": "<f2"},
+    "layer2": {"nbytes": 917568, "dtype": "<f2"},
+    "layer3": {"nbytes": 263168, "dtype": "<f2"}
+  },
+  "operator": {
+    "type": "GatedWindowTransformer",
+    "channels": 512,
+    "hidden_channels": 256,
+    "projected_channels": 256,
+    "window_tokens": 64,
+    "head_count": 16,
+    "head_width": 16,
+    "activation": {
+      "type": "clipped_abs_polynomial",
+      "clip": [-4.0, 4.0],
+      "coefficients": [0.89453125, 0.447265625, 0.055908203125]
+    }
+  },
+  "outputs": [
+    {
+      "name": "gate",
+      "source": "layer0",
+      "source_dtype": "<f2",
+      "element_start": 0,
+      "element_count": 131072,
+      "shape": [256, 512],
+      "output_dtype": "<f2",
+      "layout": "OC_IC"
+    },
+    {
+      "name": "value",
+      "source": "layer0",
+      "source_dtype": "<f2",
+      "element_start": 131072,
+      "element_count": 131072,
+      "shape": [256, 512],
+      "output_dtype": "<f2",
+      "layout": "OC_IC"
+    },
+    {
+      "name": "ffn_projection",
+      "source": "layer1",
+      "source_dtype": "<f2",
+      "element_start": 0,
+      "element_count": 131072,
+      "shape": [512, 256],
+      "output_dtype": "<f2",
+      "layout": "OC_IC"
+    },
+    {
+      "name": "ffn_residual_scale",
+      "source": "layer1",
+      "source_dtype": "<f2",
+      "element_start": 131072,
+      "element_count": 512,
+      "shape": [512],
+      "output_dtype": "<f2",
+      "layout": "C"
+    },
+    {
+      "name": "qkv",
+      "source": "layer2",
+      "source_dtype": "<f2",
+      "element_start": 0,
+      "element_count": 393216,
+      "shape": [3, 256, 512],
+      "transpose": [0, 2, 1],
+      "output_dtype": "<f2",
+      "layout": "QKV_IC_OC"
+    },
+    {
+      "name": "relative_bias",
+      "source": "layer2",
+      "source_dtype": "<f2",
+      "element_start": 393216,
+      "element_count": 65536,
+      "shape": [16, 64, 64],
+      "output_dtype": "<f2",
+      "layout": "HEAD_Q_K"
+    },
+    {
+      "name": "logit_scale",
+      "source": "layer2",
+      "source_dtype": "<f2",
+      "byte_start": 917504,
+      "byte_count": 64,
+      "reinterpret_dtype": "<f4",
+      "shape": [16],
+      "output_dtype": "<f4",
+      "layout": "HEAD"
+    },
+    {
+      "name": "output_projection",
+      "source": "layer3",
+      "source_dtype": "<f2",
+      "element_start": 0,
+      "element_count": 131072,
+      "shape": [512, 256],
+      "output_dtype": "<f2",
+      "layout": "OC_IC"
+    },
+    {
+      "name": "attention_residual_scale",
+      "source": "layer3",
+      "source_dtype": "<f2",
+      "element_start": 131072,
+      "element_count": 512,
+      "shape": [512],
+      "output_dtype": "<f2",
+      "layout": "C"
+    }
+  ]
+}
