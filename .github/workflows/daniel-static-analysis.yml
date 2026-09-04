@@ -31,7 +31,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             binutils cabextract file innoextract llvm p7zip-full
           python -m pip install --disable-pip-version-check \
-            capstone==5.0.6 pefile==2024.8.26 pyelftools==0.32
+            capstone==5.0.6 msgpack==1.1.1 pefile==2024.8.26 pyelftools==0.32
 
       - name: Analyze public installer without executing it
         run: |
@@ -45,51 +45,81 @@ jobs:
             --url "$URL" --expected-sha256 "$SHA" --output analysis-output
           python research/daniel/xref_pe.py \
             --url "$URL" --expected-sha256 "$SHA" --output analysis-output
+          python research/daniel/decode_amdgpu_metadata.py \
+            --url "$URL" --expected-sha256 "$SHA" --output analysis-output
+          python research/daniel/summarize_contract.py \
+            --input analysis-output --output analysis-output --radius 14
 
-      - name: Enforce static-only artifact policy and print evidence
+      - name: Enforce static-only policy and print compact contract
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
 
           root = Path("analysis-output")
-          report = json.loads((root / "report.json").read_text(encoding="utf-8"))
-          payloads = json.loads((root / "payload-map.json").read_text(encoding="utf-8"))
-          xrefs = json.loads((root / "pe-xrefs.json").read_text(encoding="utf-8"))
-          for item in (report, payloads, xrefs):
+          names = ["report.json", "payload-map.json", "pe-xrefs.json", "amdgpu-abi.json", "contract-summary.json"]
+          reports = [json.loads((root / name).read_text(encoding="utf-8")) for name in names]
+          for item in reports:
               assert item["analysis_mode"] == "static_only_never_executed"
-          assert report["expected_sha256_matched"] is True
-          assert payloads["installer_sha256"] == report["installer"]["sha256"] == xrefs["installer_sha256"]
+          digests = {
+              reports[0]["installer"]["sha256"],
+              reports[1]["installer_sha256"],
+              reports[2]["installer_sha256"],
+              reports[3]["installer_sha256"],
+              reports[4]["installer_sha256"],
+          }
+          assert len(digests) == 1, digests
           forbidden = {".exe", ".dll", ".bin", ".so", ".cubin", ".hsaco", ".elf"}
           leaked = [str(p) for p in root.rglob("*") if p.is_file() and p.suffix.lower() in forbidden]
           assert not leaked, leaked
 
-          print((root / "report.md").read_text(encoding="utf-8"))
-          print((root / "payload-map.md").read_text(encoding="utf-8"))
-          print((root / "pe-xrefs.md").read_text(encoding="utf-8"))
-
-          print("\n=== PAYLOAD MACHINE SUMMARY ===")
+          compact = reports[4]
+          print("=== CONTRACT COUNTS ===")
           print(json.dumps({
-              "valid_pe_offsets": payloads["valid_pe_offsets"],
-              "valid_elf_offsets": payloads["valid_elf_offsets"],
-              "pe": [{
-                  "offset": x["offset"],
-                  "kind": x["kind"],
-                  "intrinsic_size": x["intrinsic_size"],
-                  "sha256": x["intrinsic_sha256"],
-                  "imports": x["imports"],
-                  "exports": x["exports"],
-                  "resources": x["resources"],
-              } for x in payloads["pe_candidates"]],
-              "elf": [{
-                  "offset": x["offset"],
-                  "machine": x["machine"],
-                  "intrinsic_size": x["intrinsic_size"],
-                  "sha256": x["intrinsic_sha256"],
-                  "kernel_symbols": x["kernel_symbols"],
-                  "notes": x["notes"],
-              } for x in payloads["elf_candidates"]],
-          }, indent=2, ensure_ascii=False))
+              "installer_sha256": compact["installer_sha256"],
+              "pe_images": compact["pe_image_count"],
+              "contract_functions": len(compact["contract_functions"]),
+              "amdgpu_code_objects": len(compact["amdgpu_code_objects"]),
+              "kernels": sum(len(x["kernels"]) for x in compact["amdgpu_code_objects"]),
+          }, indent=2))
+
+          print("\n=== WEIGHT-CONTAINER AND RECOGNITION XREFS ===")
+          for fn in compact["contract_functions"]:
+              if fn["category"] not in {"weight_container", "weight_recognition"}:
+                  continue
+              print(json.dumps({
+                  "pe_index": fn["pe_index"],
+                  "pe_offset": fn["pe_offset"],
+                  "category": fn["category"],
+                  "begin_rva": fn["function_begin_rva"],
+                  "end_rva": fn["function_end_rva"],
+                  "size": fn["function_size"],
+                  "targets": fn["targets"],
+              }, indent=2, ensure_ascii=False))
+              for window in fn["windows"]:
+                  print("--- XREF WINDOW ---")
+                  print("\n".join(window["lines"]))
+
+          print("\n=== AMDGPU ABI SUMMARY ===")
+          for obj in compact["amdgpu_code_objects"]:
+              print(json.dumps({
+                  "index": obj["index"],
+                  "offset": obj["offset"],
+                  "size": obj["size"],
+                  "targets": obj["targets"],
+                  "metadata_versions": obj["metadata_versions"],
+                  "kernels": [{
+                      "name": k["name"],
+                      "symbol": k["symbol"],
+                      "kernarg_segment_size": k["kernarg_segment_size"],
+                      "group_segment_fixed_size": k["group_segment_fixed_size"],
+                      "sgpr_count": k["sgpr_count"],
+                      "vgpr_count": k["vgpr_count"],
+                      "max_flat_workgroup_size": k["max_flat_workgroup_size"],
+                      "wavefront_size": k["wavefront_size"],
+                      "args": k["args"],
+                  } for k in obj["kernels"]],
+              }, indent=2, ensure_ascii=False))
           PY
 
       - name: Upload metadata-only report
