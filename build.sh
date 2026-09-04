@@ -47,9 +47,11 @@ common_flags=(
   -ld3d12 -ldxgi
 
 "${compiler}" "${common_flags[@]}" \
-  src/core_proxy.cpp src/core_proxy.def \
+  src/core_proxy.cpp \
+  src/dlssnr_weight_api.cpp \
+  src/core_proxy.def \
   -o "${output_dir}/_nvngx.dll" \
   -ld3d12 -ldxgi
 
 echo "Built ${output_dir}/bridge-nvngx.dll"
-echo "Built ${output_dir}/_nvngx.dll"
+echo "Built ${output_dir}/_nvngx.dll (including DLSSNRW1 weight API)"
